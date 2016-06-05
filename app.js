@@ -1,6 +1,8 @@
-var config = require('./config.js');
-var TwitterBot = require('./TwitterBot.js');
+'use strict';
 
-var bot = new TwitterBot(config.twitter);
+let config = require('./config.js');
+let TwitterBot = require('./TwitterBot.js');
+
+let bot = new TwitterBot(config.twitter);
 
 bot.run();
