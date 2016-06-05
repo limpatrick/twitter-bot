@@ -44,11 +44,11 @@ class TwitterBot extends Twit {
 
 	/**
 	 * Permet de récupérer la limite d'utilisation de l'API de Twitter avec la ressource statuses/mentions_timeline
-	 * @param  {Function} callback Fonction de callback exécuté une fois la récupération de la limite effectué
+	 * @param  {Function} callback Fonction de callback exécuté une fois la récupération de la limite effectuée
 	 */
-	getMentionsTimelineLimit(callback) {
+	setRemaining(callback) {
 		let _this = this;
-		log('getMentionsTimelineLimit');
+		log('setRemaining');
 
 		this.get('application/rate_limit_status', {
 			resources: 'statuses'
@@ -59,10 +59,10 @@ class TwitterBot extends Twit {
 				if (typeof callback === 'function')
 					callback();
 			} else {
-				log('setTimeout getMentionsTimelineLimit');
+				log('setTimeout setRemaining');
 
 				setTimeout(function() {
-					_this.getMentionsTimelineLimit(callback);
+					_this.setRemaining(callback);
 				}, TwitterBot.TIMER);
 			}
 		});
@@ -70,39 +70,27 @@ class TwitterBot extends Twit {
 
 	/**
 	 * Permet de récupérer les tweets du compte
+	 * @param  {Function} callback Fonction de callback exécuté une fois la récupération des tweets effectuée
 	 */
-	getTweets() {
+	getTweets(callback) {
 		let _this = this;
 
 		this.getTweetsInProgress = true;
 
 		this.get('statuses/mentions_timeline', {}, function(err, data, response) {
-			if (typeof err === 'undefined') {
-				for (let tweet of data) {
-					if (isNewTweet(tweet))
-						_this.retweet(tweet);
-				}
-			}
+			if (typeof callback === 'function')
+				callback(err, data, response);
 
-			_this.remaining--;
 			_this.getTweetsInProgress = false;
 		});
-
-		/**
-		 * Détermine si le tweet est un nouveau tweet
-		 * @param  {Object}  tweet Objet tweet retourné par l'API de Twitter
-		 * @return {Boolean}       true si tweet est un nouveau tweet et false sinon
-		 */
-		function isNewTweet(tweet) {
-			return _this.refDate < new Date(tweet.created_at) && _this.retweets.indexOf(tweet.id_str) == -1;
-		}
 	}
 
 	/**
 	 * Permet d'envoyer un tweet à l'expéditeur du tweet donné
 	 * @param  {Object} tweet Objet tweet retourné par l'API de Twitter
+	 * @param  {Function} callback Fonction de callback exécuté une fois l'envoi du tweet effectué
 	 */
-	retweet(tweet) {
+	retweet(tweet, callback) {
 		let _this = this;
 		let retweet = {};
 
@@ -116,14 +104,8 @@ class TwitterBot extends Twit {
 			log(retweet);
 
 			this.post('statuses/update', retweet, function(err, data, response) {
-				if (typeof err === 'undefined') {
-					TwitterBot.RETWEETED++;
-
-					log('TwitterBot.RETWEETED = ' + TwitterBot.RETWEETED);
-				} else {
-					log('retweet failed');
-					log(err);
-				}
+				if (typeof callback === 'function')
+					callback(err, data, response);
 			});
 		}
 	}
@@ -136,21 +118,64 @@ class TwitterBot extends Twit {
 
 		this.refDate = new Date();
 
-		this.getMentionsTimelineLimit(function() {
+		this.setRemaining(function() {
 			setInterval(function() {
 				log('remaining = ' + _this.remaining);
 
 				if (_this.getTweetsInProgress === false) {
 					if (_this.remaining > 0)
-						_this.getTweets();
+						_this.getTweets(_onTweets);
 					else
-						_this.getMentionsTimelineLimit(function() {
+						_this.setRemaining(function() {
 							if (_this.remaining > 0)
-								_this.getTweets();
+								_this.getTweets(_onTweets);
 						});
 				}
 			}, TwitterBot.TIMER);
 		});
+
+		/**
+		 * Gère le retour de la récupération des tweets
+		 * @param  {Object} err      Erreur retournée par l'API de Twitter
+		 * @param  {Object} data     Données retournées par l'API de Twitter
+		 * @param  {Object} response Réponse retournée par l'API de Twitter
+		 */
+		function _onTweets(err, data, response) {
+			if (typeof err === 'undefined') {
+				for (let tweet of data) {
+					if (_isNewTweet(tweet))
+						_this.retweet(tweet, _afterRetweet);
+				}
+			}
+
+			_this.remaining--;
+		}
+
+		/**
+		 * Gère le retour de l'envoi d'un tweet
+		 * @param  {Object} err      Erreur retournée par l'API de Twitter
+		 * @param  {Object} data     Données retournées par l'API de Twitter
+		 * @param  {Object} response Réponse retournée par l'API de Twitter
+		 */
+		function _afterRetweet(err, data, response) {
+			if (typeof err === 'undefined') {
+				TwitterBot.RETWEETED++;
+
+				log('TwitterBot.RETWEETED = ' + TwitterBot.RETWEETED);
+			} else {
+				log('retweet failed');
+				log(err);
+			}
+		}
+
+		/**
+		 * Détermine si le tweet est un nouveau tweet
+		 * @param  {Object}  tweet Objet tweet retourné par l'API de Twitter
+		 * @return {Boolean}       true si tweet est un nouveau tweet et false sinon
+		 */
+		function _isNewTweet(tweet) {
+			return _this.refDate < new Date(tweet.created_at) && _this.retweets.indexOf(tweet.id_str) == -1;
+		}
 	}
 }
 
