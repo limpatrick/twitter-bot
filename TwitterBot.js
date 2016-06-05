@@ -6,6 +6,9 @@ function log(data) {
 	console.log(JSON.stringify(data, null, 2));
 }
 
+/**
+ * Classe TwitterBot
+ */
 class TwitterBot extends Twit {
 	/**
 	 * Constructeur de TwitterBot
@@ -13,6 +16,12 @@ class TwitterBot extends Twit {
 	 */
 	constructor(config) {
 		super(config);
+
+		/**
+		 * Détermine si la récupération des tweets est déjà lancé
+		 * @type {Boolean}
+		 */
+		this.getTweetsInProgress = false;
 
 		/**
 		 * Date de référence pour déterminer les nouveaux tweets
@@ -37,9 +46,9 @@ class TwitterBot extends Twit {
 	 * Permet de récupérer la limite d'utilisation de l'API de Twitter avec la ressource statuses/mentions_timeline
 	 * @param  {Function} callback Fonction de callback exécuté une fois la récupération de la limite effectué
 	 */
-	getRateLimitStatus(callback) {
+	getMentionsTimelineLimit(callback) {
 		let _this = this;
-		log('getRateLimitStatus');
+		log('getMentionsTimelineLimit');
 
 		this.get('application/rate_limit_status', {
 			resources: 'statuses'
@@ -50,10 +59,10 @@ class TwitterBot extends Twit {
 				if (typeof callback === 'function')
 					callback();
 			} else {
-				log('setTimeout getRateLimitStatus');
+				log('setTimeout getMentionsTimelineLimit');
 
 				setTimeout(function() {
-					_this.getRateLimitStatus(callback);
+					_this.getMentionsTimelineLimit(callback);
 				}, TwitterBot.TIMER);
 			}
 		});
@@ -65,6 +74,8 @@ class TwitterBot extends Twit {
 	getTweets() {
 		let _this = this;
 
+		this.getTweetsInProgress = true;
+
 		this.get('statuses/mentions_timeline', {}, function(err, data, response) {
 			if (typeof err === 'undefined') {
 				for (let tweet of data) {
@@ -72,8 +83,9 @@ class TwitterBot extends Twit {
 						_this.retweet(tweet);
 				}
 			}
-			throw 'end';
+
 			_this.remaining--;
+			_this.getTweetsInProgress = false;
 		});
 
 		/**
@@ -82,7 +94,7 @@ class TwitterBot extends Twit {
 		 * @return {Boolean}       true si tweet est un nouveau tweet et false sinon
 		 */
 		function isNewTweet(tweet) {
-			return /*_this.refDate < new Date(tweet.created_at) && */ _this.retweets.indexOf(tweet.id_str) == -1;
+			return _this.refDate < new Date(tweet.created_at) && _this.retweets.indexOf(tweet.id_str) == -1;
 		}
 	}
 
@@ -91,9 +103,29 @@ class TwitterBot extends Twit {
 	 * @param  {Object} tweet Objet tweet retourné par l'API de Twitter
 	 */
 	retweet(tweet) {
-		log('retweet');
-		log(tweet.text);
-		throw 'todo';
+		let _this = this;
+		let retweet = {};
+
+		this.retweets.push(tweet.id_str);
+
+		retweet.status = '@' + tweet.user.screen_name + ' retweet prev tweet : "' + tweet.text + '"';
+		retweet.in_reply_to_status_id = tweet.id_str;
+
+		// pour tester
+		if (tweet.user.id_str == '727846907037552642') {
+			log(retweet);
+
+			this.post('statuses/update', retweet, function(err, data, response) {
+				if (typeof err === 'undefined') {
+					TwitterBot.RETWEETED++;
+
+					log('TwitterBot.RETWEETED = ' + TwitterBot.RETWEETED);
+				} else {
+					log('retweet failed');
+					log(err);
+				}
+			});
+		}
 	}
 
 	/**
@@ -104,27 +136,34 @@ class TwitterBot extends Twit {
 
 		this.refDate = new Date();
 
-		this.getRateLimitStatus(function() {
+		this.getMentionsTimelineLimit(function() {
 			setInterval(function() {
-				log(_this.remaining);
+				log('remaining = ' + _this.remaining);
 
-				if (_this.remaining > 0)
-					_this.getTweets();
-				else
-					_this.getRateLimitStatus(function() {
-						if (_this.remaining > 0)
-							_this.getTweets();
-					});
+				if (_this.getTweetsInProgress === false) {
+					if (_this.remaining > 0)
+						_this.getTweets();
+					else
+						_this.getMentionsTimelineLimit(function() {
+							if (_this.remaining > 0)
+								_this.getTweets();
+						});
+				}
 			}, TwitterBot.TIMER);
 		});
 	}
 }
 
 /**
- * Intervalle de temps pour exécuter les fonctions périodiques
+ * Intervalle de temps (1 min) pour exécuter les fonctions périodiques
  * @type {Number}
  */
 TwitterBot.TIMER = 1000 * 60;
-TwitterBot.TIMER = 1000;
+
+/**
+ * Compte le nombre de retweets effectués
+ * @type {Number}
+ */
+TwitterBot.RETWEETED = 0;
 
 module.exports = TwitterBot;
