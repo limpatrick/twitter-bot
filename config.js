@@ -1,4 +1,6 @@
-var config = {};
+'use strict';
+
+let config = {};
 
 config.twitter = {
 	consumer_key: '',
