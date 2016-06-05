@@ -1,19 +1,36 @@
 'use strict';
 
-var Twit = require('twit');
+let Twit = require('twit');
 
 function log(data) {
 	console.log(JSON.stringify(data, null, 2));
 }
 
 class TwitterBot extends Twit {
+	/**
+	 * Constructeur de TwitterBot
+	 * @param  {Object} config Objet de configuration utilisé par la classe Twit
+	 */
 	constructor(config) {
 		super(config);
 
-		this.rateLimit = {
-			limit: 0,
-			remaining: 0
-		};
+		/**
+		 * Date de référence pour déterminer les nouveaux tweets
+		 * @type {Date}
+		 */
+		this.refDate = null;
+
+		/**
+		 * Limite d'utilisation de l'API de Twitter sur la ressource statuses/mentions_timeline
+		 * @type {Number}
+		 */
+		this.remaining = 0;
+
+		/**
+		 * Liste des tweets ayant été retweeté par TwitterBot (contient les id_str des tweets)
+		 * @type {Array}
+		 */
+		this.retweets = [];
 	}
 
 	/**
@@ -21,76 +38,93 @@ class TwitterBot extends Twit {
 	 * @param  {Function} callback Fonction de callback exécuté une fois la récupération de la limite effectué
 	 */
 	getRateLimitStatus(callback) {
-		var _this = this;
+		let _this = this;
 		log('getRateLimitStatus');
+
 		this.get('application/rate_limit_status', {
 			resources: 'statuses'
 		}, function(err, data, response) {
 			if (typeof err === 'undefined') {
-				_this.rateLimit = {
-					limit: data.resources.statuses['/statuses/mentions_timeline'].limit,
-					remaining: data.resources.statuses['/statuses/mentions_timeline'].remaining,
-				};
+				_this.remaining = data.resources.statuses['/statuses/mentions_timeline'].remaining;
 
 				if (typeof callback === 'function')
 					callback();
-			} else
+			} else {
+				log('setTimeout getRateLimitStatus');
+
 				setTimeout(function() {
-					_this.getRateLimitStatus(callback, true);
-				}, 1000 * 60);
+					_this.getRateLimitStatus(callback);
+				}, TwitterBot.TIMER);
+			}
 		});
 	}
 
 	/**
-	 * Lance le mécanisme de récupération des tweets du compte
+	 * Permet de récupérer les tweets du compte
 	 */
 	getTweets() {
-		var _this = this;
-		var progress = false;
+		let _this = this;
 
-		log('getTweets');
-
-		var idInterval = setInterval(function() {
-			log(_this.rateLimit.remaining);
-			if (_this.rateLimit.remaining > 0)
-				_getTweets();
-			else
-				_this.getRateLimitStatus(function() {
-					if (_this.rateLimit.remaining > 0)
-						_getTweets();
-				});
-		}, 1000);
+		this.get('statuses/mentions_timeline', {}, function(err, data, response) {
+			if (typeof err === 'undefined') {
+				for (let tweet of data) {
+					if (isNewTweet(tweet))
+						_this.retweet(tweet);
+				}
+			}
+			throw 'end';
+			_this.remaining--;
+		});
 
 		/**
-		 * Permet de récupérer les tweets du compte
+		 * Détermine si le tweet est un nouveau tweet
+		 * @param  {Object}  tweet Objet tweet retourné par l'API de Twitter
+		 * @return {Boolean}       true si tweet est un nouveau tweet et false sinon
 		 */
-		function _getTweets() {
-			if (!progress) {
-				progress = true;
-
-				_this.get('statuses/mentions_timeline', {}, function(err, data, response) {
-					if (typeof err === 'undefined') {
-						log(data[0].text);
-					}
-
-					_this.rateLimit.remaining--;
-					progress = false;
-				});
-			}
+		function isNewTweet(tweet) {
+			return /*_this.refDate < new Date(tweet.created_at) && */ _this.retweets.indexOf(tweet.id_str) == -1;
 		}
 	}
 
-	onTweet() {
-
+	/**
+	 * Permet d'envoyer un tweet à l'expéditeur du tweet donné
+	 * @param  {Object} tweet Objet tweet retourné par l'API de Twitter
+	 */
+	retweet(tweet) {
+		log('retweet');
+		log(tweet.text);
+		throw 'todo';
 	}
 
+	/**
+	 * Permet de lancer le bot Twitter
+	 */
 	run() {
-		var _this = this;
+		let _this = this;
+
+		this.refDate = new Date();
 
 		this.getRateLimitStatus(function() {
-			_this.getTweets();
+			setInterval(function() {
+				log(_this.remaining);
+
+				if (_this.remaining > 0)
+					_this.getTweets();
+				else
+					_this.getRateLimitStatus(function() {
+						if (_this.remaining > 0)
+							_this.getTweets();
+					});
+			}, TwitterBot.TIMER);
 		});
 	}
 }
+
+/**
+ * Intervalle de temps pour exécuter les fonctions périodiques
+ * @type {Number}
+ */
+TwitterBot.TIMER = 1000 * 60;
+TwitterBot.TIMER = 1000;
 
 module.exports = TwitterBot;
