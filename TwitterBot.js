@@ -59,7 +59,7 @@ class TwitterBot {
 	 */
 	setRemaining(callback) {
 		let _this = this;
-		log('setRemaining');
+		log('Récupération limite d\'utilisation ressource statuses/mentions_timeline');
 
 		this._twit.get('application/rate_limit_status', {
 			resources: 'statuses'
@@ -70,8 +70,6 @@ class TwitterBot {
 				if (typeof callback === 'function')
 					callback();
 			} else {
-				log('setTimeout setRemaining');
-
 				setTimeout(function() {
 					_this.setRemaining(callback);
 				}, TwitterBot.TIMER);
@@ -112,15 +110,10 @@ class TwitterBot {
 			retweet.status = response;
 			retweet.in_reply_to_status_id = tweet.id_str;
 
-			// pour tester
-			if (tweet.user.id_str == '727846907037552642') {
-				log(retweet);
-
-				_this._twit.post('statuses/update', retweet, function(err, data, response) {
-					if (typeof callback === 'function')
-						callback(err, data, response);
-				});
-			}
+			_this._twit.post('statuses/update', retweet, function(err, data, response) {
+				if (typeof callback === 'function')
+					callback(err, data, response);
+			});
 		});
 
 		/**
@@ -157,7 +150,7 @@ class TwitterBot {
 
 		this.setRemaining(function() {
 			setInterval(function() {
-				log('remaining = ' + _this._remaining);
+				log('appel ressource statuses/mentions_timeline restant : ' + _this._remaining);
 
 				if (_this._getTweetsInProgress === false) {
 					if (_this._remaining > 0)
@@ -198,6 +191,7 @@ class TwitterBot {
 			if (typeof err === 'undefined') {
 				TwitterBot.RETWEETED++;
 
+				log('retweet : ' + data.text);
 				log('TwitterBot.RETWEETED = ' + TwitterBot.RETWEETED);
 			} else {
 				log('retweet failed');
