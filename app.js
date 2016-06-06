@@ -3,6 +3,6 @@
 let config = require('./config.js');
 let TwitterBot = require('./TwitterBot.js');
 
-let bot = new TwitterBot(config.twitter);
+let bot = new TwitterBot(config);
 
 bot.run();
