@@ -92,13 +92,8 @@ class TwitterBot {
 
 				if (typeof callback === 'function')
 					callback();
-			} else {
+			} else
 				log(err);
-
-				setTimeout(function() {
-					_this.setRemaining(callback);
-				}, TwitterBot.TIMER);
-			}
 		});
 	}
 
