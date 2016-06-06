@@ -112,6 +112,7 @@ class TwitterBot extends Twit {
 
 	/**
 	 * Permet de lancer le bot Twitter
+	 * Récupère les derniers tweets du compte et répond aux expéditeurs de ces tweets
 	 */
 	run() {
 		let _this = this;
