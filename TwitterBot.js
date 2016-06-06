@@ -21,25 +21,25 @@ class TwitterBot extends Twit {
 		 * Détermine si la récupération des tweets est déjà lancé
 		 * @type {Boolean}
 		 */
-		this.getTweetsInProgress = false;
+		this._getTweetsInProgress = false;
 
 		/**
 		 * Date de référence pour déterminer les nouveaux tweets
 		 * @type {Date}
 		 */
-		this.refDate = null;
+		this._refDate = null;
 
 		/**
 		 * Limite d'utilisation de l'API de Twitter sur la ressource statuses/mentions_timeline
 		 * @type {Number}
 		 */
-		this.remaining = 0;
+		this._remaining = 0;
 
 		/**
 		 * Liste des tweets ayant été retweeté par TwitterBot (contient les id_str des tweets)
 		 * @type {Array}
 		 */
-		this.retweets = [];
+		this._retweets = [];
 	}
 
 	/**
@@ -54,7 +54,7 @@ class TwitterBot extends Twit {
 			resources: 'statuses'
 		}, function(err, data, response) {
 			if (typeof err === 'undefined') {
-				_this.remaining = data.resources.statuses['/statuses/mentions_timeline'].remaining;
+				_this._remaining = data.resources.statuses['/statuses/mentions_timeline'].remaining;
 
 				if (typeof callback === 'function')
 					callback();
@@ -75,26 +75,26 @@ class TwitterBot extends Twit {
 	getTweets(callback) {
 		let _this = this;
 
-		this.getTweetsInProgress = true;
+		this._getTweetsInProgress = true;
 
 		this.get('statuses/mentions_timeline', {}, function(err, data, response) {
 			if (typeof callback === 'function')
 				callback(err, data, response);
 
-			_this.getTweetsInProgress = false;
+			_this._getTweetsInProgress = false;
 		});
 	}
 
 	/**
 	 * Permet d'envoyer un tweet à l'expéditeur du tweet donné
-	 * @param  {Object} tweet Objet tweet retourné par l'API de Twitter
+	 * @param  {Object} tweet Objet tweet initial retourné par l'API de Twitter
 	 * @param  {Function} callback Fonction de callback exécuté une fois l'envoi du tweet effectué
 	 */
 	retweet(tweet, callback) {
 		let _this = this;
 		let retweet = {};
 
-		this.retweets.push(tweet.id_str);
+		this._retweets.push(tweet.id_str);
 
 		retweet.status = '@' + tweet.user.screen_name + ' retweet prev tweet : "' + tweet.text + '"';
 		retweet.in_reply_to_status_id = tweet.id_str;
@@ -116,18 +116,18 @@ class TwitterBot extends Twit {
 	run() {
 		let _this = this;
 
-		this.refDate = new Date();
+		this._refDate = new Date();
 
 		this.setRemaining(function() {
 			setInterval(function() {
-				log('remaining = ' + _this.remaining);
+				log('remaining = ' + _this._remaining);
 
-				if (_this.getTweetsInProgress === false) {
-					if (_this.remaining > 0)
+				if (_this._getTweetsInProgress === false) {
+					if (_this._remaining > 0)
 						_this.getTweets(_onTweets);
 					else
 						_this.setRemaining(function() {
-							if (_this.remaining > 0)
+							if (_this._remaining > 0)
 								_this.getTweets(_onTweets);
 						});
 				}
@@ -148,7 +148,7 @@ class TwitterBot extends Twit {
 				}
 			}
 
-			_this.remaining--;
+			_this._remaining--;
 		}
 
 		/**
@@ -174,7 +174,7 @@ class TwitterBot extends Twit {
 		 * @return {Boolean}       true si tweet est un nouveau tweet et false sinon
 		 */
 		function _isNewTweet(tweet) {
-			return _this.refDate < new Date(tweet.created_at) && _this.retweets.indexOf(tweet.id_str) == -1;
+			return _this._refDate <= new Date(tweet.created_at) && _this._retweets.indexOf(tweet.id_str) == -1;
 		}
 	}
 }
