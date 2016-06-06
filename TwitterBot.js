@@ -54,6 +54,28 @@ class TwitterBot {
 	}
 
 	/**
+	 * Créer le message en réponse à un tweet donné
+	 * @param  {Object}   tweet    Objet tweet retourné par l'API de Twitter
+	 * @param  {Function} callback Fonction de callback exécuté une fois la génération de la réponse faite
+	 */
+	createResponseMessage(tweet, callback) {
+		let response = '@' + tweet.user.screen_name + ' Traduction : ';
+		let text = tweet.text.substring(tweet.text.indexOf(' ') + 1); // on retire la mention du compte dans le message
+
+		_this._translator.detect(text, function(err, ln) {
+			if (err === null)
+				_this._translator.translate(ln, 'fr', text, function(err, data) {
+					if (err === null) {
+						response += data.translation;
+
+						if (typeof callback === 'function')
+							callback(response);
+					}
+				});
+		});
+	}
+
+	/**
 	 * Permet de récupérer la limite d'utilisation de l'API de Twitter avec la ressource statuses/mentions_timeline
 	 * @param  {Function} callback Fonction de callback exécuté une fois la récupération de la limite effectuée
 	 */
@@ -70,6 +92,8 @@ class TwitterBot {
 				if (typeof callback === 'function')
 					callback();
 			} else {
+				log(err);
+
 				setTimeout(function() {
 					_this.setRemaining(callback);
 				}, TwitterBot.TIMER);
@@ -104,7 +128,7 @@ class TwitterBot {
 
 		this._retweets.push(tweet.id_str);
 
-		_getResponseTweet(tweet, function(response) {
+		this.createResponseMessage(tweet, function(response) {
 			let retweet = {};
 
 			retweet.status = response;
@@ -115,28 +139,6 @@ class TwitterBot {
 					callback(err, data, response);
 			});
 		});
-
-		/**
-		 * Détermine la réponse à un tweet donné
-		 * @param  {Object}   tweet    Objet tweet retourné par l'API de Twitter
-		 * @param  {Function} callback Fonction de callback exécuté une fois la génération de la réponse faite
-		 */
-		function _getResponseTweet(tweet, callback) {
-			let response = '@' + tweet.user.screen_name + ' Traduction : ';
-			let text = tweet.text.substring(tweet.text.indexOf(' ') + 1); // on retire la mention du compte dans le message
-
-			_this._translator.detect(text, function(err, ln) {
-				if (err === null)
-					_this._translator.translate(ln, 'fr', text, function(err, data) {
-						if (err === null) {
-							response += data.translation;
-
-							if (typeof callback === 'function')
-								callback(response);
-						}
-					});
-			});
-		}
 	}
 
 	/**
