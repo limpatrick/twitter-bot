@@ -98,25 +98,45 @@ class TwitterBot {
 
 	/**
 	 * Permet d'envoyer un tweet à l'expéditeur du tweet donné
-	 * @param  {Object} tweet Objet tweet initial retourné par l'API de Twitter
+	 * @param  {Object}   tweet    Objet tweet initial retourné par l'API de Twitter
 	 * @param  {Function} callback Fonction de callback exécuté une fois l'envoi du tweet effectué
 	 */
 	retweet(tweet, callback) {
 		let _this = this;
-		let retweet = {};
 
 		this._retweets.push(tweet.id_str);
 
-		retweet.status = '@' + tweet.user.screen_name + ' retweet prev tweet : "' + tweet.text + '"';
-		retweet.in_reply_to_status_id = tweet.id_str;
+		_getResponseTweet(tweet, function(response) {
+			let retweet = {};
 
-		// pour tester
-		if (tweet.user.id_str == '727846907037552642') {
-			log(retweet);
+			retweet.status = response;
+			retweet.in_reply_to_status_id = tweet.id_str;
 
-			this._twit.post('statuses/update', retweet, function(err, data, response) {
+			// pour tester
+			if (tweet.user.id_str == '727846907037552642') {
+				log(retweet);
+
+				_this._twit.post('statuses/update', retweet, function(err, data, response) {
+					if (typeof callback === 'function')
+						callback(err, data, response);
+				});
+			}
+		});
+
+		/**
+		 * Détermine la réponse à un tweet donné
+		 * @param  {Object}   tweet    Objet tweet retourné par l'API de Twitter
+		 * @param  {Function} callback Fonction de callback exécuté une fois la génération de la réponse faite
+		 */
+		function _getResponseTweet(tweet, callback) {
+			let response = '@' + tweet.user.screen_name + ' Traduction : ';
+			let text = tweet.text.substring(tweet.text.indexOf(' ') + 1); // on retire la mention du compte dans le message
+
+			_this._translator.translate('fr', 'en', text, function(data) {
+				response += data.translation;
+
 				if (typeof callback === 'function')
-					callback(err, data, response);
+					callback(response);
 			});
 		}
 	}
