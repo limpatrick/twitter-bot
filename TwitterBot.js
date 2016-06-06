@@ -59,10 +59,11 @@ class TwitterBot {
 	 * @param  {Function} callback Fonction de callback exécuté une fois la génération de la réponse faite
 	 */
 	createResponseMessage(tweet, callback) {
+		let _this = this;
 		let response = '@' + tweet.user.screen_name + ' Traduction : ';
 		let text = tweet.text.substring(tweet.text.indexOf(' ') + 1); // on retire la mention du compte dans le message
 
-		_this._translator.detect(text, function(err, ln) {
+		this._translator.detect(text, function(err, ln) {
 			if (err === null)
 				_this._translator.translate(ln, 'fr', text, function(err, data) {
 					if (err === null) {
