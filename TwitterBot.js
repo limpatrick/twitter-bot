@@ -1,6 +1,7 @@
 'use strict';
 
 let Twit = require('twit');
+let Translator = require('./Translator.js');
 
 function log(data) {
 	console.log(JSON.stringify(data, null, 2));
@@ -9,14 +10,12 @@ function log(data) {
 /**
  * Classe TwitterBot
  */
-class TwitterBot extends Twit {
+class TwitterBot {
 	/**
 	 * Constructeur de TwitterBot
-	 * @param  {Object} config Objet de configuration utilisé par la classe Twit
+	 * @param  {Object} config Objet de configuration utilisé pour configurer Twit et Translator
 	 */
 	constructor(config) {
-		super(config);
-
 		/**
 		 * Détermine si la récupération des tweets est déjà lancé
 		 * @type {Boolean}
@@ -40,6 +39,18 @@ class TwitterBot extends Twit {
 		 * @type {Array}
 		 */
 		this._retweets = [];
+
+		/**
+		 * Instance du module Translator
+		 * @type {Translator}
+		 */
+		this._translator = new Translator(config.mstranslator);
+
+		/**
+		 * Instance du module Twit
+		 * @type {Twit}
+		 */
+		this._twit = new Twit(config.twitter);
 	}
 
 	/**
@@ -50,7 +61,7 @@ class TwitterBot extends Twit {
 		let _this = this;
 		log('setRemaining');
 
-		this.get('application/rate_limit_status', {
+		this._twit.get('application/rate_limit_status', {
 			resources: 'statuses'
 		}, function(err, data, response) {
 			if (typeof err === 'undefined') {
@@ -77,7 +88,7 @@ class TwitterBot extends Twit {
 
 		this._getTweetsInProgress = true;
 
-		this.get('statuses/mentions_timeline', {}, function(err, data, response) {
+		this._twit.get('statuses/mentions_timeline', {}, function(err, data, response) {
 			if (typeof callback === 'function')
 				callback(err, data, response);
 
@@ -103,7 +114,7 @@ class TwitterBot extends Twit {
 		if (tweet.user.id_str == '727846907037552642') {
 			log(retweet);
 
-			this.post('statuses/update', retweet, function(err, data, response) {
+			this._twit.post('statuses/update', retweet, function(err, data, response) {
 				if (typeof callback === 'function')
 					callback(err, data, response);
 			});
