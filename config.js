@@ -10,4 +10,9 @@ config.twitter = {
 	timeout_ms: 60 * 1000, // optional HTTP request timeout to apply to all requests. 
 };
 
+config.mstranslator = {
+	client_id: '',
+	client_secret: ''
+};
+
 module.exports = config;
