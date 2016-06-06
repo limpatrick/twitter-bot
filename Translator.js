@@ -20,13 +20,9 @@ class Translator {
 	 * @param  {Function} callback Fonction de callback exécuté une fois la récupération de la langue effectuée
 	 */
 	detect(text, callback) {
-		_this._mstranslator.detect({
+		this._mstranslator.detect({
 			text: text
-		}, function(err, ln) {
-			if (typeof callback === 'function')
-				if (err === null)
-					callback(ln);
-		});
+		}, callback);
 	}
 
 	/**
@@ -50,8 +46,7 @@ class Translator {
 					translation: textTranslated
 				};
 
-				if (err === null)
-					callback(response);
+				callback(err, response);
 			}
 		});
 	}

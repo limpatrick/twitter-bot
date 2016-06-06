@@ -132,11 +132,16 @@ class TwitterBot {
 			let response = '@' + tweet.user.screen_name + ' Traduction : ';
 			let text = tweet.text.substring(tweet.text.indexOf(' ') + 1); // on retire la mention du compte dans le message
 
-			_this._translator.translate('fr', 'en', text, function(data) {
-				response += data.translation;
+			_this._translator.detect(text, function(err, ln) {
+				if (err === null)
+					_this._translator.translate(ln, 'fr', text, function(err, data) {
+						if (err === null) {
+							response += data.translation;
 
-				if (typeof callback === 'function')
-					callback(response);
+							if (typeof callback === 'function')
+								callback(response);
+						}
+					});
 			});
 		}
 	}
