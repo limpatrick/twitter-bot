@@ -12,8 +12,8 @@ twitter-bot est une petite application se comportant comme un robot sur Twitter 
 twitter-bot utilise les technologies suivantes:
 
 * [node.js](https://nodejs.org) - plateforme logicielle évenementielle pour les applications backend
-* [twit](https://www.npmjs.com/package/twit) - dépendance NPM pour communiquer avec l'API de Twitter
-* [mstranslator](https://www.npmjs.com/package/mstranslator) - dépendance NPM pour communiquer avec l'API de MS Translator
+	* [twit](https://www.npmjs.com/package/twit) - dépendance NPM pour communiquer avec l'API de Twitter
+	* [mstranslator](https://www.npmjs.com/package/mstranslator) - dépendance NPM pour communiquer avec l'API de MS Translator
 
 ## Web services
 
