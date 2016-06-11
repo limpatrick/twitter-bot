@@ -1,6 +1,6 @@
 # twitter-bot
 
-*Application de services web sous forme forme de "robot interactif" réalisé dans le cadre de l'UV LO10 à l'[UTT](http://www.utt.fr).*
+*Application de services web sous forme forme de "robot interactif" réalisé dans le cadre de l'UV LO10 - Design patterns pour systèmes orientés services à l'[UTT](http://www.utt.fr).*
 
 twitter-bot est une petite application se comportant comme un robot sur Twitter répondant aux tweets de ses followers qui le mentionnent. Pour générer sa réponse, ce service est également consommateur du service MS Translator par lequel il va passer pour déterminer la langue source du message et tenter de le traduire en français avant de le retweeter à l'expéditeur du message initial.
 
