@@ -49,7 +49,7 @@ Récupère les derniers tweets du compte et répond aux expéditeurs de ces twee
 
 # Translator
 
-Voir [API mstranslator](https://github.com/nanek/mstranslator/blob/master/API.md#mstranslator)
+Voir [API mstranslator](https://github.com/nanek/mstranslator/blob/master/API.md)
 
 **Paramétres**
 
