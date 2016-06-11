@@ -2,7 +2,7 @@
 
 Voir [API twit](https://github.com/ttezel/twit#twit-api)
 
-**Paramétres**
+**Paramètres**
 
 -   `config` **Object** Objet de configuration utilisé pour configurer Twit et Translator
     -   `config.twitter` **Object** Objet de configuration pour utiliser Twit
@@ -51,7 +51,7 @@ Récupère les derniers tweets du compte et répond aux expéditeurs de ces twee
 
 Voir [API mstranslator](https://github.com/nanek/mstranslator/blob/master/API.md)
 
-**Paramétres**
+**Paramètres**
 
 -   `config` **Object** Objet de configuration pour utiliser mstranslator
 
