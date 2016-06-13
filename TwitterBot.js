@@ -60,20 +60,41 @@ class TwitterBot {
 	 */
 	createResponseMessage(tweet, callback) {
 		let _this = this;
-		let response = '@' + tweet.user.screen_name + ' Traduction : ';
+		let response = '@' + tweet.user.screen_name;
 		let text = tweet.text.substring(tweet.text.indexOf(' ') + 1); // on retire la mention du compte dans le message
 
 		this._translator.detect(text, function(err, ln) {
-			if (err === null)
-				_this._translator.translate(ln, 'fr', text, function(err, data) {
-					if (err === null) {
-						response += data.translation;
+			if (err === null) {
+				if (ln == 'fr') {
+					response += ' votre message est déjà en français : "' + text + '"';
 
-						if (typeof callback === 'function')
-							callback(response);
-					}
-				});
+					if (typeof callback === 'function')
+						callback(response);
+				} else
+					_this._translator.translate(ln, 'fr', text, function(err, data) {
+						if (err === null && text.trim().toLowerCase() != data.translation.trim().toLowerCase()) {
+							if (typeof callback === 'function') {
+								response += ' Traduction : ' + data.translation;
+								callback(response);
+							}
+						} else if (typeof callback === 'function')
+							callback(_createErrorMessage(response, text));
+					});
+			} else if (typeof callback === 'function')
+				callback(_createErrorMessage(response, text));
 		});
+
+		/**
+		 * Créer un message d'erreur à retweeter dans le cas d'une erreur au niveau de la traduction
+		 * @param  {String} mention Le début du message comportant la mention de l'user à retweeter (@user)
+		 * @param  {String} text 		Le texte à traduire
+		 * @return {String}         Le message d'erreur
+		 */
+		function _createErrorMessage(message) {
+			message += ' impossible de traduire votre message : "' + text + '"';
+
+			return message;
+		}
 	}
 
 	/**
