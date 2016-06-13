@@ -87,13 +87,11 @@ class TwitterBot {
 		/**
 		 * Créer un message d'erreur à retweeter dans le cas d'une erreur au niveau de la traduction
 		 * @param  {String} mention Le début du message comportant la mention de l'user à retweeter (@user)
-		 * @param  {String} text 		Le texte à traduire
+		 * @param  {String} text    Le texte à traduire
 		 * @return {String}         Le message d'erreur
 		 */
-		function _createErrorMessage(message) {
-			message += ' impossible de traduire votre message : "' + text + '"';
-
-			return message;
+		function _createErrorMessage(mention, text) {
+			return mention + ' impossible de traduire votre message : "' + text + '"';
 		}
 	}
 
