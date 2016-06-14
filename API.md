@@ -59,12 +59,16 @@ Voir [API mstranslator](https://github.com/nanek/mstranslator/blob/master/API.md
 
 Permet de détecter la langue source d'un texte.
 
+**Paramètres**
+
 -   `text` **String** Texte à analyser
 -   `callback` **Function** Fonction de callback exécuté une fois la récupération de la langue effectuée
 
 ## translate
 
 Traduit un texte d'une langue source vers une langue choisie.
+
+**Paramètres**
 
 -   `from` **String** Langue source
 -   `to` **String** Langue choisie
