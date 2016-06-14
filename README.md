@@ -4,6 +4,8 @@
 
 twitter-bot est une petite application se comportant comme un robot sur Twitter répondant aux tweets de ses followers qui le mentionnent. Pour générer sa réponse, ce service est également consommateur du service MS Translator par lequel il va passer pour déterminer la langue source du message et tenter de le traduire en français avant de le retweeter à l'expéditeur du message initial.
 
+twitter-bot permet dont de traduire un tweet en français et retweet un message d'erreur dans le cas où la traduction n'est pas possible ou que le message est déjà en français.
+
 ## Version
 1.0.0
 
